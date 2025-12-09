@@ -1,0 +1,51 @@
+AperturePro Core Plugin - Installation Instructions
+===================================================
+
+1. Requirements
+---------------
+- WordPress 6.x or later
+- PHP 8.0+
+- Composer (for dependency management)
+- MySQL 5.7+ or MariaDB 10.3+
+
+2. Install via Composer
+-----------------------
+From the plugin root directory (aperturepro-core/):
+
+$ composer install --no-dev
+
+This will install required libraries:
+- stripe/stripe-php
+- paypal/rest-api-sdk-php
+- firebase/php-jwt
+
+3. Build ZIP for Deployment
+---------------------------
+$ zip -r aperturepro-core.zip aperturepro-core/
+
+Upload via WordPress Admin:
+Plugins → Add New → Upload Plugin → Choose aperturepro-core.zip → Install → Activate
+
+4. Configure Settings
+---------------------
+In WordPress Admin:
+- Navigate to AperturePro → Settings
+- Enter Stripe keys, PayPal credentials, Cash App tag, audit salt, geo provider
+- If version mismatch detected, "Clean Install" appears in Maintenance section
+- Use Import/Export to backup/restore plugin data
+
+5. Multi-Tenant Mapping
+-----------------------
+For multi-tenant setups (studio1.example.com, studio2.example.com), the plugin resolves tenant slug via subdomain or X-Tenant header.
+
+6. Updates
+----------
+- On plugin update, if version mismatch occurs, admin will be prompted to run Clean Install.
+- Always export a backup (JSON) before running Clean Install.
+
+7. Notes
+--------
+- Audit logs are stored in a custom table wp_ap_audit_logs.
+- Clean Install drops the audit table and deletes plugin CPT data.
+- Import expects a JSON from AperturePro Export; do not edit keys/structure.
+
