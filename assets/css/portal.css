@@ -1,0 +1,6 @@
+.ap-portal { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'; }
+.ap-invoice-card { border: 1px solid #ddd; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; background: #fff; }
+.ap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+.ap-thumb { border: 1px solid #eee; padding: 8px; border-radius: 6px; background: #fafafa; }
+.ap-thumb img { width: 100%; height: auto; border-radius: 4px; }
+.ap-actions { display: flex; gap: 8px; margin-top: 8px; }
