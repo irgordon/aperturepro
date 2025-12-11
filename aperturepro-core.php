@@ -21,6 +21,9 @@ require_once APERTURE_PATH . 'includes/class-automation.php';
 require_once APERTURE_PATH . 'includes/class-payment-gateway.php';
 require_once APERTURE_PATH . 'includes/class-task-manager.php';
 require_once APERTURE_PATH . 'includes/class-template-manager.php';
+require_once APERTURE_PATH . 'includes/class-lead-capture.php';
+require_once APERTURE_PATH . 'includes/class-contract-handler.php';
+require_once APERTURE_PATH . 'admin/settings-page.php';
 // Autoload Classes
 require_once APERTURE_PATH . 'includes/class-cpt-manager.php';
 require_once APERTURE_PATH . 'includes/class-automation.php';
@@ -61,6 +64,17 @@ function aperture_init() {
 
     $templates = new Aperture_Template_Manager();
     $templates->init();
+    $leads = new Aperture_Lead_Capture();
+    $leads->init();
+    
+    $contracts = new Aperture_Contract_Handler();
+    $contracts->init();
+
+    // Only load admin pages if in admin area
+    if ( is_admin() ) {
+        $settings = new Aperture_Settings_Page();
+        $settings->init();
+    }
 }
 add_action( 'plugins_loaded', 'aperture_init' );
 
