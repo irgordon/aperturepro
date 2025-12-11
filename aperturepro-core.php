@@ -27,6 +27,8 @@ require_once APERTURE_PATH . 'admin/settings-page.php';
 // Autoload Classes
 require_once APERTURE_PATH . 'includes/class-cpt-manager.php';
 require_once APERTURE_PATH . 'includes/class-automation.php';
+require_once APERTURE_PATH . 'includes/class-gallery-handler.php';
+require_once APERTURE_PATH . 'includes/class-automation-cron.php';
 
 // NEW: Load the next step classes
 require_once APERTURE_PATH . 'includes/class-payment-gateway.php';
@@ -69,6 +71,11 @@ function aperture_init() {
     
     $contracts = new Aperture_Contract_Handler();
     $contracts->init();
+    $gallery_handler = new Aperture_Gallery_Handler();
+    $gallery_handler->init();
+    
+    $cron = new Aperture_Automation_Cron();
+    $cron->init();
 
     // Only load admin pages if in admin area
     if ( is_admin() ) {
