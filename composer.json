@@ -1,0 +1,13 @@
+{
+    "name": "aperturepro/core",
+    "description": "AperturePro CRM Core Plugin",
+    "require": {
+        "stripe/stripe-php": "^10.0",
+        "google/apiclient": "^2.15"
+    },
+    "autoload": {
+        "psr-4": {
+            "AperturePro\\": "includes/"
+        }
+    }
+}
