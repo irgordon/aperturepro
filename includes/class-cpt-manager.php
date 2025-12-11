@@ -70,6 +70,45 @@ class Aperture_CPT_Manager {
         </p>
         <?php
     }
+    // Add this to existing add_custom_meta_boxes()
+    add_meta_box( 'ap_invoice_gen', 'Generate Content', array($this, 'render_invoice_gen'), 'ap_invoice', 'side', 'high' );
+
+    public function render_invoice_gen( $post ) {
+        $templates = get_posts(array('post_type' => 'ap_template', 'numberposts' => -1));
+        ?>
+        <p><strong>Apply Template:</strong></p>
+        <select id="ap_template_selector">
+            <option value="">Select a template...</option>
+            <?php foreach($templates as $t): ?>
+                <option value="<?php echo $t->ID; ?>"><?php echo esc_html($t->post_title); ?></option>
+            <?php endforeach; ?>
+        </select>
+        <button type="button" class="button" id="ap_load_template">Load</button>
+        <p class="description">Warning: Overwrites current editor content.</p>
+        
+        <script>
+        jQuery('#ap_load_template').click(function(){
+            var templateId = jQuery('#ap_template_selector').val();
+            if(!templateId) return;
+
+            // AJAX call to fetch template content (simplified)
+            jQuery.post(ajaxurl, {
+                action: 'ap_get_template_content',
+                template_id: templateId
+            }, function(response){
+                if(response.success) {
+                    // Assuming Classic Editor (TinyMCE)
+                    if (typeof tinyMCE !== 'undefined' && tinyMCE.get('content')) {
+                        tinyMCE.get('content').setContent(response.data);
+                    } else {
+                        jQuery('#content').val(response.data);
+                    }
+                }
+            });
+        });
+        </script>
+        <?php
+    }
 
     public function save_meta_data( $post_id ) {
         if ( isset( $_POST['ap_project_stage'] ) ) {
