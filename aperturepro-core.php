@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: AperturePro Core
- * Description: A comprehensive WordPress CRM for photography studios. Handles Customers, Projects, Invoices, Contracts, Galleries, Automation, and Client Portals.
+ * Description: A comprehensive WordPress CRM for photography studios. Handles Customers, Projects, Invoices, Contracts, Galleries, Automation, Client Portals, and Dashboards.
  * Version: 1.0.0
  * Author: AperturePro
  * Text Domain: aperturepro
@@ -33,13 +33,18 @@ require_once APERTURE_PATH . 'includes/class-lead-capture.php';     // Frontend 
 require_once APERTURE_PATH . 'includes/class-contract-handler.php'; // Digital Signature Processing
 require_once APERTURE_PATH . 'includes/class-gallery-handler.php';  // Client Selection Logic
 require_once APERTURE_PATH . 'includes/class-automation-cron.php';  // Stale State & Nudge Bots
-require_once APERTURE_PATH . 'includes/class-admin-ui.php';         // Admin Dashboard & Custom Columns
+require_once APERTURE_PATH . 'includes/class-admin-ui.php';         // Admin List Views & 360 Customer Profile
 require_once APERTURE_PATH . 'includes/class-api-routes.php';       // REST API for Headless Leads
 require_once APERTURE_PATH . 'includes/class-client-portal.php';    // Frontend Client Dashboard
 
-// 3. Load Admin Settings UI (Only if in Admin Area)
+// NEW: Asset & Notification Managers
+require_once APERTURE_PATH . 'includes/class-notification-manager.php'; // Email Template Settings
+require_once APERTURE_PATH . 'includes/class-asset-manager.php';        // CSS/JS Enqueuing
+
+// 3. Load Admin UI Pages (Only if in Admin Area)
 if ( is_admin() ) {
     require_once APERTURE_PATH . 'admin/settings-page.php';
+    require_once APERTURE_PATH . 'admin/dashboard-page.php'; // The Command Center
 }
 
 // 4. Initialize the Plugin Modules
@@ -90,8 +95,20 @@ function aperture_init() {
     $portal = new Aperture_Client_Portal();
     $portal->init();
 
-    // Settings Page
+    // New Managers
+    $notifications = new Aperture_Notification_Manager();
+    $notifications->init();
+
+    $assets = new Aperture_Asset_Manager();
+    $assets->init();
+
+    // Admin Pages
     if ( is_admin() ) {
+        // Main Dashboard (Command Center)
+        $dashboard = new Aperture_Dashboard_Page();
+        $dashboard->init();
+
+        // Settings Page
         $settings = new Aperture_Settings_Page();
         $settings->init();
     }
