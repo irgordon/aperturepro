@@ -19,6 +19,33 @@ define( 'APERTURE_URL', plugin_dir_url( __FILE__ ) );
 require_once APERTURE_PATH . 'includes/class-cpt-manager.php';
 require_once APERTURE_PATH . 'includes/class-automation.php';
 require_once APERTURE_PATH . 'includes/class-payment-gateway.php';
+// Autoload Classes
+require_once APERTURE_PATH . 'includes/class-cpt-manager.php';
+require_once APERTURE_PATH . 'includes/class-automation.php';
+
+// NEW: Load the next step classes
+require_once APERTURE_PATH . 'includes/class-payment-gateway.php';
+require_once APERTURE_PATH . 'includes/class-gallery-proof.php';
+require_once APERTURE_PATH . 'includes/class-calendar-sync.php';
+
+// Initialize the Plugin
+function aperture_init() {
+    $cpt_manager = new Aperture_CPT_Manager();
+    $cpt_manager->init();
+    
+    $automation = new Aperture_Automation();
+    $automation->init();
+    
+    // NEW: Init new modules
+    $payment = new Aperture_Payment_Gateway();
+    $payment->init();
+    
+    $gallery = new Aperture_Gallery_Proof();
+    $gallery->init();
+    
+    $calendar = new Aperture_Calendar_Sync();
+    $calendar->init();
+}
 
 // Initialize the Plugin
 function aperture_init() {
