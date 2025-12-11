@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: AperturePro Core
- * Description: A comprehensive WordPress CRM for photography studios. Handles Customers, Projects, Invoices, Contracts, Galleries, and Automation.
+ * Description: A comprehensive WordPress CRM for photography studios. Handles Customers, Projects, Invoices, Contracts, Galleries, Automation, and Client Portals.
  * Version: 1.0.0
  * Author: AperturePro
  * Text Domain: aperturepro
@@ -35,6 +35,7 @@ require_once APERTURE_PATH . 'includes/class-gallery-handler.php';  // Client Se
 require_once APERTURE_PATH . 'includes/class-automation-cron.php';  // Stale State & Nudge Bots
 require_once APERTURE_PATH . 'includes/class-admin-ui.php';         // Admin Dashboard & Custom Columns
 require_once APERTURE_PATH . 'includes/class-api-routes.php';       // REST API for Headless Leads
+require_once APERTURE_PATH . 'includes/class-client-portal.php';    // Frontend Client Dashboard
 
 // 3. Load Admin Settings UI (Only if in Admin Area)
 if ( is_admin() ) {
@@ -84,6 +85,10 @@ function aperture_init() {
 
     $api = new Aperture_API_Routes();
     $api->init();
+
+    // Frontend Portal
+    $portal = new Aperture_Client_Portal();
+    $portal->init();
 
     // Settings Page
     if ( is_admin() ) {
