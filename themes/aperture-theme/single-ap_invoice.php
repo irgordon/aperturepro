@@ -11,6 +11,9 @@
     ?>
         
         <div class="ap-invoice-paper">
+            <div class="ap-actions" style="text-align: right; margin-bottom: 20px;">
+                <a href="?download_pdf=1" class="btn-print" target="_blank" style="padding: 10px 15px; background: #333; color: white; text-decoration: none; border-radius: 4px;">Print / Download PDF</a>
+            </div>
             <header class="ap-inv-header">
                 <div class="brand">
                     <?php $logo = get_option('ap_brand_logo'); ?>

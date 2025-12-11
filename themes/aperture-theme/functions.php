@@ -1,5 +1,16 @@
 <?php
 // Enqueue styles for the signing and gallery pages
+function aperture_theme_setup() {
+    add_theme_support( 'title-tag' );
+    add_theme_support( 'post-thumbnails' );
+    register_nav_menus( array(
+        'primary' => __( 'Primary Menu', 'aperturepro-theme' ),
+        'legal'   => __( 'Legal Menu', 'aperturepro-theme' ),
+    ) );
+}
+add_action( 'after_setup_theme', 'aperture_theme_setup' );
+
+// Enqueue styles for the signing and gallery pages
 function aperture_theme_scripts() {
     wp_enqueue_style( 'aperture-style', get_stylesheet_uri() );
     
