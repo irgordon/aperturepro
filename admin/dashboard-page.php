@@ -27,10 +27,10 @@ class Aperture_Dashboard_Page {
 
     public function render_dashboard() {
         // 1. Gather Metrics
-        $leads_count = wp_count_posts( 'ap_project' )->publish; // Simplified
+        $leads_count = wp_count_posts( 'ap_project' )->publish;
         
-        // Calculate Revenue (Paid Invoices)
         global $wpdb;
+        // Revenue
         $revenue = $wpdb->get_var( "
             SELECT SUM(meta_value) 
             FROM $wpdb->postmeta pm
@@ -42,6 +42,19 @@ class Aperture_Dashboard_Page {
             )
         " );
 
+        // Pending Invoices Count
+        // Simplified: Count all invoices that are NOT paid
+        // Note: A more robust query would check meta key existence or specific 'pending' value.
+        // Assuming status key is '_ap_invoice_status'
+        $pending_count = 0;
+        $invoices = get_posts(array('post_type' => 'ap_invoice', 'numberposts' => -1));
+        foreach($invoices as $inv) {
+            $status = get_post_meta($inv->ID, '_ap_invoice_status', true);
+            if($status !== 'paid') {
+                $pending_count++;
+            }
+        }
+
         // Upcoming Tasks (High Priority)
         $tasks = get_posts(array(
             'post_type' => 'ap_task',
@@ -49,7 +62,7 @@ class Aperture_Dashboard_Page {
             'meta_value' => 'high',
             'posts_per_page' => 5,
             'meta_query' => array(
-                array( 'key' => '_ap_task_status', 'compare' => 'NOT EXISTS' ) // Assuming 'done' sets a status
+                array( 'key' => '_ap_task_status', 'compare' => 'NOT EXISTS' )
             )
         ));
 
@@ -68,7 +81,8 @@ class Aperture_Dashboard_Page {
                 </div>
                 <div class="ap-metric-card">
                     <h3>Pending Invoices</h3>
-                    <div class="ap-metric-val">3</div> </div>
+                    <div class="ap-metric-val"><?php echo intval($pending_count); ?></div>
+                </div>
 
                 <div class="ap-dash-panel" style="grid-column: span 2;">
                     <h2>High Priority Tasks</h2>
@@ -93,9 +107,9 @@ class Aperture_Dashboard_Page {
                 <div class="ap-dash-panel">
                     <h2>Quick Actions</h2>
                     <ul class="ap-actions-list">
-                        <li><a href="<?php echo admin_url('post-new.php?post_type=ap_project'); ?>" class="button">New Project</a></li>
-                        <li><a href="<?php echo admin_url('post-new.php?post_type=ap_invoice'); ?>" class="button">New Invoice</a></li>
-                        <li><a href="<?php echo admin_url('admin.php?page=aperture-settings'); ?>" class="button">Settings</a></li>
+                        <li><a href="<?php echo admin_url('post-new.php?post_type=ap_project'); ?>" class="button">Create New Project</a></li>
+                        <li><a href="<?php echo admin_url('post-new.php?post_type=ap_invoice'); ?>" class="button">Create New Invoice</a></li>
+                        <li><a href="<?php echo admin_url('admin.php?page=ap-project-board'); ?>" class="button button-primary">Project Board</a></li>
                     </ul>
                 </div>
             </div>
@@ -103,6 +117,10 @@ class Aperture_Dashboard_Page {
 
         <style>
             .ap-dash-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px; }
+            @media (max-width: 768px) {
+                .ap-dash-grid { grid-template-columns: 1fr; }
+                .ap-dash-panel { grid-column: auto !important; }
+            }
             .ap-metric-card { background: white; padding: 25px; border-left: 5px solid #0073aa; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
             .ap-metric-card h3 { margin: 0 0 10px 0; color: #666; font-size: 0.9em; text-transform: uppercase; }
             .ap-metric-val { font-size: 2.5em; font-weight: bold; color: #333; }

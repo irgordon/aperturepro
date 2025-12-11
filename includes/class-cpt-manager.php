@@ -19,37 +19,89 @@ class Aperture_CPT_Manager {
     public function register_post_types() {
         // 1. Customer Entity
         register_post_type( 'ap_customer', array(
-            'labels' => array( 'name' => 'Customers', 'singular_name' => 'Customer' ),
+            'labels' => array(
+                'name' => 'Customers',
+                'singular_name' => 'Customer',
+                'add_new' => 'Add New Customer',
+                'add_new_item' => 'Add New Customer',
+                'edit_item' => 'Edit Customer',
+                'new_item' => 'New Customer',
+                'view_item' => 'View Customer',
+                'search_items' => 'Search Customers',
+                'not_found' => 'No customers found',
+                'not_found_in_trash' => 'No customers found in Trash',
+            ),
             'public' => false,  // Private to admin
             'show_ui' => true,
+            'show_in_menu' => 'aperture-dashboard',
+            'capability_type' => 'post',
+            'map_meta_cap' => true,
             'supports' => array( 'title', 'editor', 'thumbnail' ), // Title = Name, Editor = Notes
             'menu_icon' => 'dashicons-id',
         ));
 
         // 2. Project / Job Entity
         register_post_type( 'ap_project', array(
-            'labels' => array( 'name' => 'Projects', 'singular_name' => 'Project' ),
+            'labels' => array(
+                'name' => 'Projects',
+                'singular_name' => 'Project',
+                'add_new' => 'Add New Project',
+                'add_new_item' => 'Add New Project',
+                'edit_item' => 'Edit Project',
+                'new_item' => 'New Project',
+                'view_item' => 'View Project',
+                'search_items' => 'Search Projects',
+                'not_found' => 'No projects found',
+                'not_found_in_trash' => 'No projects found in Trash',
+            ),
             'public' => false,
             'show_ui' => true,
+            'show_in_menu' => 'aperture-dashboard',
+            'capability_type' => 'post',
+            'map_meta_cap' => true,
             'supports' => array( 'title', 'editor' ),
             'menu_icon' => 'dashicons-camera',
         ));
 
         // 3. Invoice Entity
         register_post_type( 'ap_invoice', array(
-            'labels' => array( 'name' => 'Invoices', 'singular_name' => 'Invoice' ),
+            'labels' => array(
+                'name' => 'Invoices',
+                'singular_name' => 'Invoice',
+                'add_new' => 'Create New Invoice',
+                'add_new_item' => 'Create New Invoice',
+                'edit_item' => 'Edit Invoice',
+                'new_item' => 'New Invoice',
+                'view_item' => 'View Invoice',
+                'search_items' => 'Search Invoices',
+                'not_found' => 'No invoices found',
+                'not_found_in_trash' => 'No invoices found in Trash',
+            ),
             'public' => true,   // Accessible by client via link
             'show_ui' => true,
+            'show_in_menu' => 'aperture-dashboard',
             'exclude_from_search' => true,
             'menu_icon' => 'dashicons-media-spreadsheet',
-            'supports' => array( 'title', 'editor' ), // Title = Invoice ID/Ref
+            'supports' => array( 'title', 'editor' ), // Kept editor for Terms/Notes
         ));
 
         // 4. Contract Entity
         register_post_type( 'ap_contract', array(
-            'labels' => array( 'name' => 'Contracts', 'singular_name' => 'Contract' ),
+            'labels' => array(
+                'name' => 'Contracts',
+                'singular_name' => 'Contract',
+                'add_new' => 'Create New Contract',
+                'add_new_item' => 'Create New Contract',
+                'edit_item' => 'Edit Contract',
+                'new_item' => 'New Contract',
+                'view_item' => 'View Contract',
+                'search_items' => 'Search Contracts',
+                'not_found' => 'No contracts found',
+                'not_found_in_trash' => 'No contracts found in Trash',
+            ),
             'public' => true,   // Accessible by client for signing
             'show_ui' => true,
+            'show_in_menu' => 'aperture-dashboard',
             'exclude_from_search' => true,
             'menu_icon' => 'dashicons-welcome-write-blog',
             'supports' => array( 'title', 'editor' ),
@@ -66,13 +118,54 @@ class Aperture_CPT_Manager {
         add_meta_box( 'ap_contract_sign', 'Signature Data', array($this, 'render_signature_meta'), 'ap_contract', 'side', 'default' );
         
         // Invoices
+        add_meta_box( 'ap_invoice_client', 'Client Details', array($this, 'render_client_meta'), 'ap_invoice', 'normal', 'high' );
         add_meta_box( 'ap_invoice_gen', 'Generate Content', array($this, 'render_invoice_gen'), 'ap_invoice', 'side', 'high' );
         add_meta_box( 'ap_invoice_lines', 'Line Items', array( $this, 'render_line_items_box' ), 'ap_invoice', 'normal', 'high' );
     }
 
     // --- Render Functions ---
 
+    public function render_client_meta( $post ) {
+        wp_nonce_field( 'ap_save_meta_data', 'ap_meta_nonce' ); // Security Nonce
+
+        $first_name = get_post_meta( $post->ID, '_ap_client_first_name', true );
+        $last_name  = get_post_meta( $post->ID, '_ap_client_last_name', true );
+        $email      = get_post_meta( $post->ID, '_ap_client_email', true );
+        $address    = get_post_meta( $post->ID, '_ap_client_address', true );
+        $due_date   = get_post_meta( $post->ID, '_ap_invoice_due_date', true );
+        ?>
+        <div class="ap-meta-grid">
+            <p>
+                <label for="ap_client_first_name">First Name</label><br>
+                <input type="text" name="ap_client_first_name" id="ap_client_first_name" value="<?php echo esc_attr($first_name); ?>" class="widefat">
+            </p>
+            <p>
+                <label for="ap_client_last_name">Last Name</label><br>
+                <input type="text" name="ap_client_last_name" id="ap_client_last_name" value="<?php echo esc_attr($last_name); ?>" class="widefat">
+            </p>
+            <p>
+                <label for="ap_client_email">Email</label><br>
+                <input type="email" name="ap_client_email" id="ap_client_email" value="<?php echo esc_attr($email); ?>" class="widefat">
+            </p>
+            <p>
+                <label for="ap_client_address">Billing Address</label><br>
+                <textarea name="ap_client_address" id="ap_client_address" class="widefat" rows="3"><?php echo esc_textarea($address); ?></textarea>
+            </p>
+            <p>
+                <label for="ap_invoice_due_date">Due Date</label><br>
+                <input type="date" name="ap_invoice_due_date" id="ap_invoice_due_date" value="<?php echo esc_attr($due_date); ?>" class="widefat">
+            </p>
+        </div>
+        <style>
+            .ap-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .ap-meta-grid p { margin: 0; }
+        </style>
+        <?php
+    }
+
     public function render_project_meta( $post ) {
+        wp_nonce_field( 'ap_save_meta_data', 'ap_meta_nonce' ); // Security Nonce
+
         $stage = get_post_meta( $post->ID, '_ap_project_stage', true );
         $date  = get_post_meta( $post->ID, '_ap_project_date', true );
         ?>
@@ -119,25 +212,30 @@ class Aperture_CPT_Manager {
             <?php endforeach; ?>
         </select>
         <button type="button" class="button" id="ap_load_template">Load</button>
-        <p class="description">Warning: Overwrites current editor content.</p>
+        <p class="description">Note: Overwrites editor content.</p>
         
         <script>
-        jQuery('#ap_load_template').click(function(){
-            var templateId = jQuery('#ap_template_selector').val();
-            if(!templateId) return;
+        jQuery(document).ready(function($){
+            $('#ap_load_template').click(function(){
+                var templateId = $('#ap_template_selector').val();
+                if(!templateId) return;
 
-            // AJAX call to fetch template content (Requires handler in Template Manager)
-            jQuery.post(ajaxurl, {
-                action: 'ap_get_template_content',
-                template_id: templateId
-            }, function(response){
-                if(response.success) {
-                    if (typeof tinyMCE !== 'undefined' && tinyMCE.get('content')) {
-                        tinyMCE.get('content').setContent(response.data);
+                // AJAX call to fetch template content
+                // Requires 'ap_get_template_content' action handled in Template Manager
+                $.post(ajaxurl, {
+                    action: 'ap_get_template_content',
+                    template_id: templateId
+                }, function(response){
+                    if(response.success) {
+                        if (typeof tinyMCE !== 'undefined' && tinyMCE.get('content')) {
+                            tinyMCE.get('content').setContent(response.data);
+                        } else {
+                            $('#content').val(response.data);
+                        }
                     } else {
-                        jQuery('#content').val(response.data);
+                        alert('Error loading template');
                     }
-                }
+                });
             });
         });
         </script>
@@ -223,8 +321,16 @@ class Aperture_CPT_Manager {
     // --- Save Logic ---
 
     public function save_meta_data( $post_id ) {
-        // Security check usually goes here (nonce)
+        // 1. Verify Nonce
+        if ( ! isset( $_POST['ap_meta_nonce'] ) || ! wp_verify_nonce( $_POST['ap_meta_nonce'], 'ap_save_meta_data' ) ) {
+            return;
+        }
+
+        // 2. Autosave/Permissions Check
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+        if ( ! current_user_can( 'edit_post', $post_id ) ) return;
         
+        // Save Project Meta
         if ( isset( $_POST['ap_project_stage'] ) ) {
             $old_stage = get_post_meta( $post_id, '_ap_project_stage', true );
             $new_stage = sanitize_text_field( $_POST['ap_project_stage'] );
@@ -232,14 +338,32 @@ class Aperture_CPT_Manager {
             update_post_meta( $post_id, '_ap_project_stage', $new_stage );
             update_post_meta( $post_id, '_ap_project_date', sanitize_text_field( $_POST['ap_project_date'] ) );
 
-            // Trigger Automation Hook if stage changed
             if ( $old_stage !== $new_stage ) {
                 do_action( 'ap_project_stage_change', $post_id, $new_stage, $old_stage );
             }
         }
+
+        // Save Invoice Client Meta
+        if ( isset( $_POST['ap_client_first_name'] ) ) {
+            update_post_meta( $post_id, '_ap_client_first_name', sanitize_text_field( $_POST['ap_client_first_name'] ) );
+            update_post_meta( $post_id, '_ap_client_last_name', sanitize_text_field( $_POST['ap_client_last_name'] ) );
+            update_post_meta( $post_id, '_ap_client_email', sanitize_email( $_POST['ap_client_email'] ) );
+            update_post_meta( $post_id, '_ap_client_address', sanitize_textarea_field( $_POST['ap_client_address'] ) );
+        }
+
+        if ( isset( $_POST['ap_invoice_due_date'] ) ) {
+             update_post_meta( $post_id, '_ap_invoice_due_date', sanitize_text_field( $_POST['ap_invoice_due_date'] ) );
+        }
     }
 
     public function save_invoice_line_items( $post_id ) {
+        // 1. Verify Nonce (Re-use the same nonce from the meta box area)
+        if ( ! isset( $_POST['ap_meta_nonce'] ) || ! wp_verify_nonce( $_POST['ap_meta_nonce'], 'ap_save_meta_data' ) ) {
+            return;
+        }
+
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+
         if ( ! isset( $_POST['ap_item_desc'] ) ) return;
 
         $descs = $_POST['ap_item_desc'];
@@ -262,6 +386,6 @@ class Aperture_CPT_Manager {
         }
 
         update_post_meta( $post_id, '_ap_line_items', $items );
-        update_post_meta( $post_id, '_ap_invoice_total', $grand_total ); // Used by Stripe
+        update_post_meta( $post_id, '_ap_invoice_total', $grand_total );
     }
 }
