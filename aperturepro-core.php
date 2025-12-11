@@ -19,6 +19,14 @@ define( 'APERTURE_URL', plugin_dir_url( __FILE__ ) );
 // IMPORTANT: Run 'composer install' in the plugin directory for this to work.
 if ( file_exists( APERTURE_PATH . 'vendor/autoload.php' ) ) {
     require_once APERTURE_PATH . 'vendor/autoload.php';
+} else {
+    add_action( 'admin_notices', function() {
+        ?>
+        <div class="notice notice-error">
+            <p><?php _e( 'AperturePro Core: Vendor dependencies are missing. Please run <code>composer install</code> in the plugin directory.', 'aperturepro' ); ?></p>
+        </div>
+        <?php
+    });
 }
 
 // 2. Autoload System Classes
@@ -40,6 +48,7 @@ require_once APERTURE_PATH . 'includes/class-api-routes.php';       // REST API 
 require_once APERTURE_PATH . 'includes/class-client-portal.php';    // Frontend Client Dashboard
 require_once APERTURE_PATH . 'includes/class-notification-manager.php'; // Email Template Settings
 require_once APERTURE_PATH . 'includes/class-asset-manager.php';    // CSS/JS Enqueuing & Dynamic Branding
+require_once APERTURE_PATH . 'includes/class-pdf-handler.php';      // PDF Generation
 
 // 3. Load Admin UI Pages (Only if in Admin Area)
 if ( is_admin() ) {
@@ -105,6 +114,9 @@ function aperture_init() {
 
     $assets = new Aperture_Asset_Manager();
     $assets->init();
+
+    $pdf = new Aperture_PDF_Handler();
+    $pdf->init();
 
     // Admin Pages
     if ( is_admin() ) {

@@ -1,0 +1,290 @@
+/*
+Theme Name: AperturePro Theme
+Theme URI: https://aperturepro.com
+Author: AperturePro
+Author URI: https://aperturepro.com
+Description: A mobile-first, responsive theme designed for the AperturePro CRM system.
+Version: 1.0.0
+Text Domain: aperturepro-theme
+*/
+
+:root {
+    --primary-color: #2ea2cc; /* WP Blue / Gallery Accent */
+    --secondary-color: #1e1e1e; /* Dark Gray */
+    --text-color: #333333;
+    --bg-color: #ffffff;
+    --light-gray: #f0f0f1;
+    --header-height: 60px;
+    --spacing-unit: 1rem;
+}
+
+/* Reset & Basics */
+* {
+    box_sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    line-height: 1.6;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+/* Header */
+.site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 var(--spacing-unit);
+    height: var(--header-height);
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-left .social-icons a {
+    margin-right: 10px;
+    font-size: 1.2rem;
+    color: var(--secondary-color);
+}
+
+.header-center .site-logo {
+    font-weight: bold;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    color: var(--secondary-color);
+}
+
+.header-right .menu-toggle {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--secondary-color);
+}
+
+/* Navigation Overlay */
+.site-navigation {
+    position: absolute;
+    top: var(--header-height);
+    left: 0;
+    width: 100%;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: none; /* JS will toggle this */
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 0;
+}
+
+.site-navigation.active {
+    display: flex;
+}
+
+.site-navigation a {
+    padding: 1rem;
+    font-size: 1.2rem;
+    color: var(--secondary-color);
+    width: 100%;
+    text-align: center;
+}
+
+.site-navigation a:hover {
+    background: var(--light-gray);
+    color: var(--primary-color);
+}
+
+/* Desktop Nav (Hover logic handled via media query or JS usually, but request said "middle when hover over" which implies a dropdown or specific desktop behavior.
+   Given "Mobile First", we start with hamburger. Let's make desktop version visible.)
+*/
+@media (min-width: 768px) {
+    .site-header {
+        padding: 0 2rem;
+    }
+
+    .header-right .menu-toggle {
+        display: none;
+    }
+
+    .site-navigation {
+        display: flex;
+        position: static;
+        flex-direction: row;
+        width: auto;
+        padding: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    /* "Pages showing in the middle when hover over" -
+       Interpretation: The user might mean a specific mega-menu or just that the menu appears.
+       Wait, "right is a hamburger menu with pages showing in the middle when hover over".
+       This implies the hamburger is ALWAYS there? Or only on mobile?
+       "Front-page... mobile-first... right is a hamburger menu with pages showing in the middle when hover over"
+
+       This sounds like: Hamburger icon is on the right. When you hover over the hamburger, the pages show up in the middle of the screen (overlay).
+       Let's implement that specific behavior.
+    */
+    .header-right .menu-toggle {
+        display: block; /* Always show hamburger as per request? "Mobile first... right is hamburger" */
+    }
+
+    .site-navigation {
+        /* If it's hover based on hamburger */
+        display: none;
+        position: fixed;
+        top: var(--header-height);
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0.95);
+        justify-content: center;
+        z-index: 999;
+    }
+
+    .menu-toggle:hover + .site-navigation,
+    .site-navigation:hover {
+        display: flex;
+    }
+}
+
+/* Hero Section */
+.hero-section {
+    text-align: center;
+    padding: 4rem 1rem;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--light-gray); /* Fallback */
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.hero-quote {
+    font-size: 1.5rem;
+    font-style: italic;
+    margin-bottom: 2rem;
+    max-width: 800px;
+}
+
+.btn-cta {
+    background: var(--primary-color);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 4px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background 0.3s;
+}
+
+.btn-cta:hover {
+    background: #1e87ad;
+}
+
+/* Lead Form */
+.lead-capture-section {
+    padding: 3rem 1rem;
+    background: #fff;
+    text-align: center;
+}
+
+.lead-form-wrapper {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.lead-form input[type="email"], .lead-form input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.lead-form button {
+    background: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    width: 100%;
+}
+
+/* Portfolio Grid */
+.portfolio-section {
+    padding: 3rem 1rem;
+    background: var(--light-gray);
+}
+
+.portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Mobile first responsive */
+    gap: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+    .portfolio-grid {
+        grid-template-columns: repeat(3, 1fr); /* Force 3 columns on desktop for 9 items */
+    }
+}
+
+.portfolio-item {
+    background: #fff;
+    aspect-ratio: 1/1; /* Square images */
+    overflow: hidden;
+}
+
+.portfolio-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.portfolio-item:hover img {
+    transform: scale(1.05);
+}
+
+/* Spacer & Footer */
+.spacer {
+    height: 50px;
+}
+
+.site-footer {
+    background: var(--secondary-color);
+    color: #fff;
+    padding: 2rem 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-legal a {
+    color: #ccc;
+    margin-left: 15px;
+    font-size: 0.9rem;
+}
+
+.footer-legal a:hover {
+    color: #fff;
+}

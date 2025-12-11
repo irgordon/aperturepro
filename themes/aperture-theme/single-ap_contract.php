@@ -1,6 +1,10 @@
 <?php get_header(); ?>
 
 <div class="ap-contract-container">
+    <div class="ap-actions" style="text-align: right; margin-bottom: 20px; padding: 20px;">
+        <a href="?download_pdf=1" class="btn-print" target="_blank" style="padding: 10px 15px; background: #333; color: white; text-decoration: none; border-radius: 4px;">Print / Download PDF</a>
+    </div>
+
     <?php while ( have_posts() ) : the_post(); ?>
         
         <header class="ap-contract-header">

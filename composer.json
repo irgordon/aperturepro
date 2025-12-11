@@ -3,7 +3,8 @@
     "description": "AperturePro CRM Core Plugin",
     "require": {
         "stripe/stripe-php": "^10.0",
-        "google/apiclient": "^2.15"
+        "google/apiclient": "^2.15",
+        "dompdf/dompdf": "^2.0"
     },
     "autoload": {
         "psr-4": {
