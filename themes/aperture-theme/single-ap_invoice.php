@@ -33,7 +33,21 @@
             <div class="ap-inv-body">
                 <h3>Bill To:</h3>
                 <div class="client-details">
-                    <?php echo apply_filters( 'the_content', get_the_content() ); ?>
+                    <?php
+                    $fname = get_post_meta( get_the_ID(), '_ap_client_first_name', true );
+                    $lname = get_post_meta( get_the_ID(), '_ap_client_last_name', true );
+                    $email = get_post_meta( get_the_ID(), '_ap_client_email', true );
+                    $addr  = get_post_meta( get_the_ID(), '_ap_client_address', true );
+
+                    if ( $fname || $lname ) {
+                        echo '<p><strong>' . esc_html( $fname . ' ' . $lname ) . '</strong></p>';
+                        if($email) echo '<p>' . esc_html( $email ) . '</p>';
+                        if($addr) echo '<p>' . nl2br( esc_html( $addr ) ) . '</p>';
+                    } else {
+                        // Fallback for legacy invoices created before field migration
+                        echo apply_filters( 'the_content', get_the_content() );
+                    }
+                    ?>
                 </div>
 
                 <table class="ap-inv-table">
