@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: AperturePro Core
- * Description: A WordPress CRM for photography studios. Handles Customers, Projects, Invoices, and Galleries.
+ * Description: A comprehensive WordPress CRM for photography studios. Handles Customers, Projects, Invoices, Contracts, and Galleries.
  * Version: 1.0.0
  * Author: AperturePro
  * Text Domain: aperturepro
@@ -15,27 +15,31 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'APERTURE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'APERTURE_URL', plugin_dir_url( __FILE__ ) );
 
-// Autoload Classes
-require_once APERTURE_PATH . 'includes/class-cpt-manager.php';
-require_once APERTURE_PATH . 'includes/class-automation.php';
-require_once APERTURE_PATH . 'includes/class-payment-gateway.php';
-require_once APERTURE_PATH . 'includes/class-task-manager.php';
-require_once APERTURE_PATH . 'includes/class-template-manager.php';
-require_once APERTURE_PATH . 'includes/class-lead-capture.php';
-require_once APERTURE_PATH . 'includes/class-contract-handler.php';
-require_once APERTURE_PATH . 'admin/settings-page.php';
-// Autoload Classes
-require_once APERTURE_PATH . 'includes/class-cpt-manager.php';
-require_once APERTURE_PATH . 'includes/class-automation.php';
-require_once APERTURE_PATH . 'includes/class-gallery-handler.php';
-require_once APERTURE_PATH . 'includes/class-automation-cron.php';
+// 1. Load Composer Dependencies (Stripe/Google SDKs)
+// Run 'composer install' in the plugin directory for this to work.
+if ( file_exists( APERTURE_PATH . 'vendor/autoload.php' ) ) {
+    require_once APERTURE_PATH . 'vendor/autoload.php';
+}
 
-// NEW: Load the next step classes
-require_once APERTURE_PATH . 'includes/class-payment-gateway.php';
-require_once APERTURE_PATH . 'includes/class-gallery-proof.php';
-require_once APERTURE_PATH . 'includes/class-calendar-sync.php';
+// 2. Autoload System Classes
+require_once APERTURE_PATH . 'includes/class-cpt-manager.php';      // Entities
+require_once APERTURE_PATH . 'includes/class-automation.php';       // Email Triggers
+require_once APERTURE_PATH . 'includes/class-payment-gateway.php';  // Stripe
+require_once APERTURE_PATH . 'includes/class-gallery-proof.php';    // Image Protection
+require_once APERTURE_PATH . 'includes/class-calendar-sync.php';    // Google Calendar
+require_once APERTURE_PATH . 'includes/class-task-manager.php';     // Subtasks
+require_once APERTURE_PATH . 'includes/class-template-manager.php'; // Contracts/Invoice Templating
+require_once APERTURE_PATH . 'includes/class-lead-capture.php';     // Frontend Forms
+require_once APERTURE_PATH . 'includes/class-contract-handler.php'; // Digital Signatures
+require_once APERTURE_PATH . 'includes/class-gallery-handler.php';  // Client Selections
+require_once APERTURE_PATH . 'includes/class-automation-cron.php';  // Stale State Bots
 
-// Initialize the Plugin
+// 3. Load Admin UI (Only if in Admin)
+if ( is_admin() ) {
+    require_once APERTURE_PATH . 'admin/settings-page.php';
+}
+
+// 4. Initialize the Plugin Modules
 function aperture_init() {
     $cpt_manager = new Aperture_CPT_Manager();
     $cpt_manager->init();
@@ -43,7 +47,6 @@ function aperture_init() {
     $automation = new Aperture_Automation();
     $automation->init();
     
-    // NEW: Init new modules
     $payment = new Aperture_Payment_Gateway();
     $payment->init();
     
@@ -52,32 +55,25 @@ function aperture_init() {
     
     $calendar = new Aperture_Calendar_Sync();
     $calendar->init();
-}
 
-// Initialize the Plugin
-function aperture_init() {
-    $cpt_manager = new Aperture_CPT_Manager();
-    $cpt_manager->init();
-    
-    $automation = new Aperture_Automation();
-    $automation->init();
     $tasks = new Aperture_Task_Manager();
     $tasks->init();
 
     $templates = new Aperture_Template_Manager();
     $templates->init();
+
     $leads = new Aperture_Lead_Capture();
     $leads->init();
     
     $contracts = new Aperture_Contract_Handler();
     $contracts->init();
+
     $gallery_handler = new Aperture_Gallery_Handler();
     $gallery_handler->init();
     
     $cron = new Aperture_Automation_Cron();
     $cron->init();
 
-    // Only load admin pages if in admin area
     if ( is_admin() ) {
         $settings = new Aperture_Settings_Page();
         $settings->init();
@@ -85,49 +81,20 @@ function aperture_init() {
 }
 add_action( 'plugins_loaded', 'aperture_init' );
 
-// Activation Hook for Permalinks
+// 5. Activation Hook: Permalinks & Roles
 register_activation_hook( __FILE__, 'aperture_activate' );
+
 function aperture_activate() {
+    // Trigger init to register CPTs so rewrite rules work
     aperture_init();
     flush_rewrite_rules();
-}
-add_action( 'admin_menu', 'aperture_register_admin_page' );
 
-function aperture_register_admin_page() {
-    add_menu_page(
-        'AperturePro', 
-        'AperturePro', 
-        'manage_options', 
-        'aperture-dashboard', 
-        'aperture_render_dashboard', 
-        'dashicons-camera', 
-        2 
-    );
-}
-
-function aperture_render_dashboard() {
-    // Query metrics
-    $lead_count = wp_count_posts('ap_project')->draft; // Assuming draft = lead
-    $pending_invoices = 5; // Placeholder for actual DB query
-    ?>
-    <div class="wrap">
-        <h1>AperturePro Command Center</h1>
-        <div class="ap-dashboard-widgets">
-            <div class="card">
-                <h2><?php echo $lead_count; ?></h2>
-                <p>New Leads</p>
-            </div>
-            <div class="card">
-                <h2><?php echo $pending_invoices; ?></h2>
-                <p>Unpaid Invoices</p>
-            </div>
-            <div class="card">
-                <h2>Upcoming Shoots</h2>
-                <ul>
-                    <li>Wedding: Smith vs Jones (Oct 12)</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    <?php
+    // Add 'Photographer Assistant' Role
+    add_role( 'ap_assistant', 'Photographer Assistant', array(
+        'read' => true,
+        'edit_posts' => false,
+        'delete_posts' => false,
+        'manage_ap_tasks' => true, 
+        'view_ap_projects' => true,
+    ));
 }
