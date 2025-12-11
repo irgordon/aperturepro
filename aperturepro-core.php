@@ -19,6 +19,8 @@ define( 'APERTURE_URL', plugin_dir_url( __FILE__ ) );
 require_once APERTURE_PATH . 'includes/class-cpt-manager.php';
 require_once APERTURE_PATH . 'includes/class-automation.php';
 require_once APERTURE_PATH . 'includes/class-payment-gateway.php';
+require_once APERTURE_PATH . 'includes/class-task-manager.php';
+require_once APERTURE_PATH . 'includes/class-template-manager.php';
 // Autoload Classes
 require_once APERTURE_PATH . 'includes/class-cpt-manager.php';
 require_once APERTURE_PATH . 'includes/class-automation.php';
@@ -54,6 +56,11 @@ function aperture_init() {
     
     $automation = new Aperture_Automation();
     $automation->init();
+    $tasks = new Aperture_Task_Manager();
+    $tasks->init();
+
+    $templates = new Aperture_Template_Manager();
+    $templates->init();
 }
 add_action( 'plugins_loaded', 'aperture_init' );
 
