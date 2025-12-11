@@ -36,3 +36,43 @@ function aperture_activate() {
     aperture_init();
     flush_rewrite_rules();
 }
+add_action( 'admin_menu', 'aperture_register_admin_page' );
+
+function aperture_register_admin_page() {
+    add_menu_page(
+        'AperturePro', 
+        'AperturePro', 
+        'manage_options', 
+        'aperture-dashboard', 
+        'aperture_render_dashboard', 
+        'dashicons-camera', 
+        2 
+    );
+}
+
+function aperture_render_dashboard() {
+    // Query metrics
+    $lead_count = wp_count_posts('ap_project')->draft; // Assuming draft = lead
+    $pending_invoices = 5; // Placeholder for actual DB query
+    ?>
+    <div class="wrap">
+        <h1>AperturePro Command Center</h1>
+        <div class="ap-dashboard-widgets">
+            <div class="card">
+                <h2><?php echo $lead_count; ?></h2>
+                <p>New Leads</p>
+            </div>
+            <div class="card">
+                <h2><?php echo $pending_invoices; ?></h2>
+                <p>Unpaid Invoices</p>
+            </div>
+            <div class="card">
+                <h2>Upcoming Shoots</h2>
+                <ul>
+                    <li>Wedding: Smith vs Jones (Oct 12)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <?php
+}
