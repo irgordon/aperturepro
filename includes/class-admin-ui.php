@@ -42,19 +42,22 @@ class Aperture_Admin_UI {
                 $stage = get_post_meta( $post_id, '_ap_project_stage', true );
                 // Color coding stages
                 $colors = array(
-                    'lead' => '#e5e5e5', 
-                    'proposal' => '#ffefc1', 
-                    'editing' => '#c1e1ff', 
-                    'delivered' => '#d4edda'
+                    'lead'     => '#e5e5e5', // Grey
+                    'proposal' => '#ffefc1', // Yellow
+                    'editing'  => '#c1e1ff', // Blue
+                    'delivered'=> '#d4edda'  // Green
                 );
                 $bg = isset($colors[$stage]) ? $colors[$stage] : '#fff';
-                echo '<span style="background:'.$bg.'; padding: 5px 10px; border-radius: 4px; font-weight:bold;">' . ucfirst($stage) . '</span>';
+                // Fallback text if stage is empty
+                $stage_text = $stage ? ucfirst($stage) : 'Unknown';
+                
+                echo '<span style="background:'.$bg.'; padding: 5px 10px; border-radius: 4px; font-weight:bold;">' . esc_html($stage_text) . '</span>';
                 break;
 
             case 'ap_customer':
                 $cust_id = get_post_meta( $post_id, '_ap_project_customer', true );
                 if ( $cust_id ) {
-                    echo '<a href="' . get_edit_post_link($cust_id) . '"><strong>' . get_the_title($cust_id) . '</strong></a>';
+                    echo '<a href="' . get_edit_post_link($cust_id) . '"><strong>' . esc_html(get_the_title($cust_id)) . '</strong></a>';
                 } else {
                     echo '<span style="color:#999;">—</span>';
                 }
@@ -104,18 +107,17 @@ class Aperture_Admin_UI {
         $projects = get_posts(array(
             'post_type' => 'ap_project',
             'meta_key' => '_ap_project_customer',
-            'meta_value' => $post->ID
+            'meta_value' => $post->ID,
+            'numberposts' => -1
         ));
         
-        // 2. Fetch Invoices (to calc Lifetime Value)
-        // Note: In a real query you might filter invoices by linked projects
-        // For simplicity, we assume we can link invoices to projects to customers
-        // This is a placeholder for that logic.
+        // 2. Fetch/Calculate Financials (Placeholder logic)
+        // In a real scenario, you'd loop through linked invoices and sum 'total' where status='paid'
         $total_spent = 0; 
         
         ?>
         <div class="ap-360-dashboard" style="display:flex; gap: 20px;">
-            <div class="ap-card" style="flex:1; background:#f9f9f9; padding:15px; border:1px solid #ddd;">
+            <div class="ap-card" style="flex:1; background:#f9f9f9; padding:15px; border:1px solid #ddd; border-radius:4px;">
                 <h3>Projects</h3>
                 <?php if($projects): ?>
                     <ul style="list-style:none; padding:0; margin:0;">
@@ -131,24 +133,24 @@ class Aperture_Admin_UI {
                 <?php else: ?>
                     <p>No projects found.</p>
                 <?php endif; ?>
-                <a href="<?php echo admin_url('post-new.php?post_type=ap_project'); ?>" class="button button-small">New Project</a>
+                <a href="<?php echo admin_url('post-new.php?post_type=ap_project'); ?>" class="button button-small" style="margin-top:10px;">New Project</a>
             </div>
 
-            <div class="ap-card" style="flex:1; background:#f9f9f9; padding:15px; border:1px solid #ddd;">
+            <div class="ap-card" style="flex:1; background:#f9f9f9; padding:15px; border:1px solid #ddd; border-radius:4px;">
                 <h3>Financials</h3>
                 <p style="font-size: 2em; margin: 10px 0;">$<?php echo number_format($total_spent, 2); ?></p>
                 <p style="color:#666;">Lifetime Value</p>
                 <a href="<?php echo admin_url('post-new.php?post_type=ap_invoice'); ?>" class="button button-small">Create Invoice</a>
             </div>
             
-            <div class="ap-card" style="flex:1; background:#f9f9f9; padding:15px; border:1px solid #ddd;">
+            <div class="ap-card" style="flex:1; background:#f9f9f9; padding:15px; border:1px solid #ddd; border-radius:4px;">
                 <h3>Contact Info</h3>
                 <?php 
                 $email = get_post_meta($post->ID, '_ap_client_email', true);
                 $phone = get_post_meta($post->ID, '_ap_client_phone', true);
                 ?>
                 <p><strong>Email:</strong> <a href="mailto:<?php echo esc_attr($email); ?>"><?php echo esc_html($email); ?></a></p>
-                <p><strong>Phone:</strong> <?php echo esc_html($phone); ?></p>
+                <p><strong>Phone:</strong> <?php echo esc_html($phone ? $phone : 'N/A'); ?></p>
             </div>
         </div>
         <?php
