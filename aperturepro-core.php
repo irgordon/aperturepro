@@ -2,7 +2,7 @@
 /**
  * Plugin Name: AperturePro Core
  * Description: A comprehensive WordPress CRM for photography studios. Handles Customers, Projects, Invoices, Contracts, Galleries, Automation, Client Portals, and Dashboards.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: AperturePro
  * Text Domain: aperturepro
  */
@@ -22,6 +22,8 @@ if ( file_exists( APERTURE_PATH . 'vendor/autoload.php' ) ) {
 }
 
 // 2. Autoload System Classes
+require_once APERTURE_PATH . 'includes/class-activator.php';        // Setup & Directory Creation
+require_once APERTURE_PATH . 'includes/class-template-loader.php';  // Force Custom Templates
 require_once APERTURE_PATH . 'includes/class-cpt-manager.php';      // Entities (Projects, Invoices, etc.)
 require_once APERTURE_PATH . 'includes/class-automation.php';       // Email Triggers
 require_once APERTURE_PATH . 'includes/class-payment-gateway.php';  // Stripe Integration
@@ -36,10 +38,8 @@ require_once APERTURE_PATH . 'includes/class-automation-cron.php';  // Stale Sta
 require_once APERTURE_PATH . 'includes/class-admin-ui.php';         // Admin List Views & 360 Customer Profile
 require_once APERTURE_PATH . 'includes/class-api-routes.php';       // REST API for Headless Leads
 require_once APERTURE_PATH . 'includes/class-client-portal.php';    // Frontend Client Dashboard
-
-// NEW: Asset & Notification Managers
 require_once APERTURE_PATH . 'includes/class-notification-manager.php'; // Email Template Settings
-require_once APERTURE_PATH . 'includes/class-asset-manager.php';        // CSS/JS Enqueuing
+require_once APERTURE_PATH . 'includes/class-asset-manager.php';    // CSS/JS Enqueuing & Dynamic Branding
 
 // 3. Load Admin UI Pages (Only if in Admin Area)
 if ( is_admin() ) {
@@ -49,6 +49,10 @@ if ( is_admin() ) {
 
 // 4. Initialize the Plugin Modules
 function aperture_init() {
+    // Core Infrastructure
+    $templater = new Aperture_Template_Loader();
+    $templater->init();
+
     // Core Entities
     $cpt_manager = new Aperture_CPT_Manager();
     $cpt_manager->init();
@@ -95,7 +99,7 @@ function aperture_init() {
     $portal = new Aperture_Client_Portal();
     $portal->init();
 
-    // New Managers
+    // Managers (Assets & Notifications)
     $notifications = new Aperture_Notification_Manager();
     $notifications->init();
 
@@ -104,32 +108,18 @@ function aperture_init() {
 
     // Admin Pages
     if ( is_admin() ) {
-        // Main Dashboard (Command Center)
         $dashboard = new Aperture_Dashboard_Page();
         $dashboard->init();
 
-        // Settings Page
         $settings = new Aperture_Settings_Page();
         $settings->init();
     }
 }
 add_action( 'plugins_loaded', 'aperture_init' );
 
-// 5. Activation Hook: Permalinks & Roles
-register_activation_hook( __FILE__, 'aperture_activate' );
+// 5. Activation Hook: Uses the Activator Class for setup
+// This creates your folders and pages automatically upon activation
+register_activation_hook( __FILE__, array( 'Aperture_Activator', 'activate' ) );
 
-function aperture_activate() {
-    // Trigger init to register CPTs so rewrite rules work immediately
-    aperture_init();
-    flush_rewrite_rules();
-
-    // Add 'Photographer Assistant' Role
-    // Allows team members to manage tasks without full admin access
-    add_role( 'ap_assistant', 'Photographer Assistant', array(
-        'read' => true,
-        'edit_posts' => false,
-        'delete_posts' => false,
-        'manage_ap_tasks' => true, 
-        'view_ap_projects' => true,
-    ));
-}
+// 6. Deactivation Hook (Optional cleanup, usually leave data intact)
+// register_deactivation_hook( __FILE__, array( 'Aperture_Activator', 'deactivate' ) );
