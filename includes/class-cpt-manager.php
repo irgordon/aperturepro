@@ -14,6 +14,17 @@ class Aperture_CPT_Manager {
         add_action( 'add_meta_boxes', array( $this, 'add_custom_meta_boxes' ) );
         add_action( 'save_post', array( $this, 'save_meta_data' ) );
         add_action( 'save_post', array( $this, 'save_invoice_line_items' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+    }
+
+    public function enqueue_admin_scripts( $hook ) {
+        global $post;
+        if ( ! $post || 'ap_invoice' !== $post->post_type ) {
+            return;
+        }
+
+        wp_enqueue_style( 'ap-invoice-editor', APERTURE_URL . 'assets/css/invoice-editor.css', array(), '1.0' );
+        wp_enqueue_script( 'ap-invoice-editor', APERTURE_URL . 'assets/js/invoice-editor.js', array( 'jquery' ), '1.0', true );
     }
 
     public function register_post_types() {
@@ -106,6 +117,29 @@ class Aperture_CPT_Manager {
             'menu_icon' => 'dashicons-welcome-write-blog',
             'supports' => array( 'title', 'editor' ),
         ));
+
+        // 5. Gallery Entity
+        register_post_type( 'ap_gallery', array(
+            'labels' => array(
+                'name' => 'Galleries',
+                'singular_name' => 'Gallery',
+                'add_new' => 'Create New Gallery',
+                'add_new_item' => 'Create New Gallery',
+                'edit_item' => 'Edit Gallery',
+                'new_item' => 'New Gallery',
+                'view_item' => 'View Gallery',
+                'search_items' => 'Search Galleries',
+                'not_found' => 'No galleries found',
+                'not_found_in_trash' => 'No galleries found in Trash',
+            ),
+            'public' => true,
+            'show_ui' => true,
+            'show_in_menu' => 'aperture-dashboard',
+            'capability_type' => 'post',
+            'map_meta_cap' => true,
+            'supports' => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+            'menu_icon' => 'dashicons-format-gallery',
+        ));
     }
 
     // --- Meta Box Registrations ---
@@ -117,49 +151,171 @@ class Aperture_CPT_Manager {
         // Contracts
         add_meta_box( 'ap_contract_sign', 'Signature Data', array($this, 'render_signature_meta'), 'ap_contract', 'side', 'default' );
         
-        // Invoices
-        add_meta_box( 'ap_invoice_client', 'Client Details', array($this, 'render_client_meta'), 'ap_invoice', 'normal', 'high' );
-        add_meta_box( 'ap_invoice_gen', 'Generate Content', array($this, 'render_invoice_gen'), 'ap_invoice', 'side', 'high' );
-        add_meta_box( 'ap_invoice_lines', 'Line Items', array( $this, 'render_line_items_box' ), 'ap_invoice', 'normal', 'high' );
+        // Invoices - New Single Main Editor
+        add_meta_box(
+            'ap_invoice_main_editor',
+            'Invoice Editor',
+            array($this, 'render_invoice_editor'),
+            'ap_invoice',
+            'normal',
+            'high'
+        );
     }
 
     // --- Render Functions ---
 
-    public function render_client_meta( $post ) {
+    public function render_invoice_editor( $post ) {
         wp_nonce_field( 'ap_save_meta_data', 'ap_meta_nonce' ); // Security Nonce
 
+        // Retrieve Data
         $first_name = get_post_meta( $post->ID, '_ap_client_first_name', true );
         $last_name  = get_post_meta( $post->ID, '_ap_client_last_name', true );
         $email      = get_post_meta( $post->ID, '_ap_client_email', true );
         $address    = get_post_meta( $post->ID, '_ap_client_address', true );
         $due_date   = get_post_meta( $post->ID, '_ap_invoice_due_date', true );
+        $items      = get_post_meta( $post->ID, '_ap_line_items', true );
+        if ( ! is_array( $items ) ) $items = array();
+
+        // Pass Items to JS
         ?>
-        <div class="ap-meta-grid">
-            <p>
-                <label for="ap_client_first_name">First Name</label><br>
-                <input type="text" name="ap_client_first_name" id="ap_client_first_name" value="<?php echo esc_attr($first_name); ?>" class="widefat">
-            </p>
-            <p>
-                <label for="ap_client_last_name">Last Name</label><br>
-                <input type="text" name="ap_client_last_name" id="ap_client_last_name" value="<?php echo esc_attr($last_name); ?>" class="widefat">
-            </p>
-            <p>
-                <label for="ap_client_email">Email</label><br>
-                <input type="email" name="ap_client_email" id="ap_client_email" value="<?php echo esc_attr($email); ?>" class="widefat">
-            </p>
-            <p>
-                <label for="ap_client_address">Billing Address</label><br>
-                <textarea name="ap_client_address" id="ap_client_address" class="widefat" rows="3"><?php echo esc_textarea($address); ?></textarea>
-            </p>
-            <p>
-                <label for="ap_invoice_due_date">Due Date</label><br>
-                <input type="date" name="ap_invoice_due_date" id="ap_invoice_due_date" value="<?php echo esc_attr($due_date); ?>" class="widefat">
-            </p>
+        <script>
+            var ap_invoice_data = {
+                items: <?php echo json_encode( $items ); ?>
+            };
+        </script>
+
+        <div class="ap-invoice-editor-wrapper">
+
+            <!-- LEFT COLUMN -->
+            <div class="ap-inv-main">
+
+                <!-- Customer Section -->
+                <div class="ap-inv-card">
+                    <h3><span class="dashicons dashicons-admin-users icon"></span> Customer</h3>
+                    <div class="ap-inv-input-group">
+                        <label>Customer Name</label>
+                        <div style="display:flex; gap:10px;">
+                             <input type="text" name="ap_client_first_name" placeholder="First Name" value="<?php echo esc_attr($first_name); ?>" class="ap-inv-control">
+                             <input type="text" name="ap_client_last_name" placeholder="Last Name" value="<?php echo esc_attr($last_name); ?>" class="ap-inv-control">
+                        </div>
+                    </div>
+                    <div class="ap-inv-input-group">
+                        <label>Email</label>
+                        <input type="email" name="ap_client_email" placeholder="customer@example.com" value="<?php echo esc_attr($email); ?>" class="ap-inv-control">
+                    </div>
+
+                    <!-- Toggle for Address -->
+                    <div class="ap-toggle-row">
+                        <label><input type="checkbox" id="ap_toggle_address" <?php checked(!empty($address)); ?>> Ship items to / Add address</label>
+                    </div>
+                    <div id="ap_address_box" class="<?php echo empty($address) ? 'hidden' : ''; ?>" style="margin-top:15px;">
+                        <textarea name="ap_client_address" class="ap-inv-control" placeholder="Billing Address"><?php echo esc_textarea($address); ?></textarea>
+                    </div>
+                    <script>
+                        jQuery('#ap_toggle_address').change(function(){
+                            jQuery('#ap_address_box').toggleClass('hidden', !this.checked);
+                        });
+                    </script>
+                </div>
+
+                <!-- Items Section -->
+                <div class="ap-inv-card">
+                    <h3><span class="dashicons dashicons-cart icon"></span> Items <span style="margin-left:auto; font-size:0.8em; font-weight:normal;">USD</span></h3>
+
+                    <!-- Items List Container -->
+                    <div id="ap_items_list_visual" class="ap-inv-items-list">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Add Item Form -->
+                    <div class="ap-inv-add-form">
+                        <div class="ap-inv-item-type-selector">
+                            <label class="ap-inv-radio-label"><input type="radio" name="ap_item_type_selector" value="amount"> Amount only</label>
+                            <label class="ap-inv-radio-label"><input type="radio" name="ap_item_type_selector" value="quantity" checked> Quantity</label>
+                            <label class="ap-inv-radio-label"><input type="radio" name="ap_item_type_selector" value="hours"> Hours</label>
+                        </div>
+
+                        <div class="ap-inv-row-inputs">
+                            <input type="text" id="ap_new_item_name" class="ap-inv-control" placeholder="Item Name">
+                            <div style="position:relative;">
+                                <label style="position:absolute; top:-25px; left:0; font-size:12px;">Qty</label>
+                                <input type="number" id="ap_new_item_qty" class="ap-inv-control" value="1" step="0.5">
+                            </div>
+                            <input type="number" id="ap_new_item_price" class="ap-inv-control" placeholder="Price" step="0.01">
+                        </div>
+
+                        <div class="ap-inv-meta-links">
+                            <a href="#">+ Show tax, discount, date</a>
+                        </div>
+
+                        <textarea id="ap_new_item_desc" class="ap-inv-control" placeholder="Description (Optional)"></textarea>
+
+                        <div style="margin-top:10px;">
+                            <label><input type="checkbox"> Save item for future invoices</label>
+                        </div>
+
+                        <div class="ap-inv-add-btn-row">
+                            <button type="button" id="ap_add_item_btn" class="btn-black-pill">Add</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes Section (Replaces Editor) -->
+                <div class="ap-inv-card">
+                    <h3><span class="dashicons dashicons-media-text icon"></span> Notes</h3>
+                    <div style="font-size: 0.9em; color:#666; margin-bottom:10px;">Standard Editor below can also be used for Terms.</div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="ap-inv-sidebar">
+
+                <!-- Summary Card -->
+                <div class="ap-inv-card">
+                    <h3>Invoice <?php echo $post->ID; ?> <a href="#" class="ap-edit-link"><span class="dashicons dashicons-edit"></span> Edit</a></h3>
+                    <div class="ap-summary-row">
+                        <span>Issued</span>
+                        <span><?php echo get_the_date(); ?></span>
+                    </div>
+                    <div class="ap-summary-row">
+                        <span>Due</span>
+                        <input type="date" name="ap_invoice_due_date" value="<?php echo esc_attr($due_date); ?>" style="border:none; background:transparent; text-align:right;">
+                    </div>
+                    <hr style="margin: 15px 0; border:0; border-top:1px solid #eee;">
+                    <div class="ap-summary-row">
+                        <span>Subtotal</span>
+                        <span id="ap_summary_subtotal">$0.00</span>
+                    </div>
+                    <div class="ap-summary-row total">
+                        <span>Total (Tax exclusive)</span>
+                        <span id="ap_summary_total">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- Payment Options -->
+                <div class="ap-inv-card">
+                    <h3>Payment options</h3>
+                    <div class="ap-option-row">
+                        <label><input type="checkbox" name="ap_allow_partial"> Allow partial payment <span class="dashicons dashicons-editor-help" style="font-size:14px;"></span></label>
+                    </div>
+                    <div class="ap-option-row">
+                        <label><input type="checkbox" name="ap_allow_tip"> Allow tip</label>
+                    </div>
+
+                    <h4 style="margin-top:20px; font-size:0.9em;">Available payment methods</h4>
+                    <p style="font-size:0.8em; color:#777;">Your customers can choose how to pay.</p>
+                    <div class="ap-payment-icons">
+                         <span class="ap-pay-icon">Visa</span>
+                         <span class="ap-pay-icon">MC</span>
+                         <span class="ap-pay-icon">Amex</span>
+                         <span class="ap-pay-icon">PayP</span>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
-        <style>
-            .ap-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-            .ap-meta-grid p { margin: 0; }
-        </style>
         <?php
     }
 
@@ -199,123 +355,6 @@ class Aperture_CPT_Manager {
         } else {
             echo '<div style="color:red;">❌ Awaiting Signature</div>';
         }
-    }
-
-    public function render_invoice_gen( $post ) {
-        $templates = get_posts(array('post_type' => 'ap_template', 'numberposts' => -1));
-        ?>
-        <p><strong>Apply Template:</strong></p>
-        <select id="ap_template_selector">
-            <option value="">Select a template...</option>
-            <?php foreach($templates as $t): ?>
-                <option value="<?php echo $t->ID; ?>"><?php echo esc_html($t->post_title); ?></option>
-            <?php endforeach; ?>
-        </select>
-        <button type="button" class="button" id="ap_load_template">Load</button>
-        <p class="description">Note: Overwrites editor content.</p>
-        
-        <script>
-        jQuery(document).ready(function($){
-            $('#ap_load_template').click(function(){
-                var templateId = $('#ap_template_selector').val();
-                if(!templateId) return;
-
-                // AJAX call to fetch template content
-                // Requires 'ap_get_template_content' action handled in Template Manager
-                $.post(ajaxurl, {
-                    action: 'ap_get_template_content',
-                    template_id: templateId
-                }, function(response){
-                    if(response.success) {
-                        if (typeof tinyMCE !== 'undefined' && tinyMCE.get('content')) {
-                            tinyMCE.get('content').setContent(response.data);
-                        } else {
-                            $('#content').val(response.data);
-                        }
-                    } else {
-                        alert('Error loading template');
-                    }
-                });
-            });
-        });
-        </script>
-        <?php
-    }
-
-    public function render_line_items_box( $post ) {
-        $items = get_post_meta( $post->ID, '_ap_line_items', true );
-        if ( ! is_array( $items ) ) $items = array();
-        ?>
-        <div id="ap-line-items-wrapper">
-            <table class="widefat" id="ap-line-items-table">
-                <thead>
-                    <tr>
-                        <th>Description</th>
-                        <th>Qty</th>
-                        <th>Rate ($)</th>
-                        <th>Total</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if(empty($items)): ?>
-                        <tr class="ap-item-row">
-                            <td><input type="text" name="ap_item_desc[]" style="width:100%"></td>
-                            <td><input type="number" name="ap_item_qty[]" class="qty" value="1" style="width:60px"></td>
-                            <td><input type="number" name="ap_item_rate[]" class="rate" step="0.01" style="width:100px"></td>
-                            <td><span class="row-total">$0.00</span></td>
-                            <td><button type="button" class="button remove-row">x</button></td>
-                        </tr>
-                    <?php else: foreach($items as $item): ?>
-                        <tr class="ap-item-row">
-                            <td><input type="text" name="ap_item_desc[]" value="<?php echo esc_attr($item['desc']); ?>" style="width:100%"></td>
-                            <td><input type="number" name="ap_item_qty[]" class="qty" value="<?php echo esc_attr($item['qty']); ?>" style="width:60px"></td>
-                            <td><input type="number" name="ap_item_rate[]" class="rate" step="0.01" value="<?php echo esc_attr($item['rate']); ?>" style="width:100px"></td>
-                            <td><span class="row-total">$<?php echo number_format($item['qty'] * $item['rate'], 2); ?></span></td>
-                            <td><button type="button" class="button remove-row">x</button></td>
-                        </tr>
-                    <?php endforeach; endif; ?>
-                </tbody>
-            </table>
-            <button type="button" class="button button-primary" id="add-row" style="margin-top:10px;">+ Add Item</button>
-            <p style="text-align:right; font-weight:bold; font-size:1.2em;">Grand Total: <span id="grand-total">$0.00</span></p>
-        </div>
-
-        <script>
-            jQuery(document).ready(function($){
-                function calcTotals() {
-                    var grand = 0;
-                    $('.ap-item-row').each(function(){
-                        var qty = parseFloat($(this).find('.qty').val()) || 0;
-                        var rate = parseFloat($(this).find('.rate').val()) || 0;
-                        var total = qty * rate;
-                        $(this).find('.row-total').text('$' + total.toFixed(2));
-                        grand += total;
-                    });
-                    $('#grand-total').text('$' + grand.toFixed(2));
-                }
-
-                $('#ap-line-items-table').on('input', 'input', calcTotals);
-                
-                $('#add-row').click(function(){
-                    var row = $('.ap-item-row').first().clone();
-                    row.find('input').val(''); 
-                    row.find('.qty').val(1);
-                    row.find('.row-total').text('$0.00');
-                    $('#ap-line-items-table tbody').append(row);
-                });
-
-                $('#ap-line-items-table').on('click', '.remove-row', function(){
-                    if($('.ap-item-row').length > 1) {
-                        $(this).closest('tr').remove();
-                        calcTotals();
-                    }
-                });
-                
-                calcTotals(); 
-            });
-        </script>
-        <?php
     }
 
     // --- Save Logic ---
