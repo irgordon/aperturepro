@@ -27,7 +27,13 @@ class Aperture_Dashboard_Page {
 
     public function render_dashboard() {
         // 1. Gather Metrics
-        $leads_count = wp_count_posts( 'ap_project' )->publish;
+        $leads_query = new WP_Query(array(
+            'post_type' => 'ap_project',
+            'meta_key' => '_ap_project_stage',
+            'meta_value' => 'lead',
+            'post_status' => 'publish'
+        ));
+        $leads_count = $leads_query->found_posts;
         
         global $wpdb;
         // Revenue
@@ -76,7 +82,7 @@ class Aperture_Dashboard_Page {
                     <div class="ap-metric-val">$<?php echo number_format((float)$revenue, 2); ?></div>
                 </div>
                 <div class="ap-metric-card">
-                    <h3>Active Projects</h3>
+                    <h3>New Leads</h3>
                     <div class="ap-metric-val"><?php echo intval($leads_count); ?></div>
                 </div>
                 <div class="ap-metric-card">
